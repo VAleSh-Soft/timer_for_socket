@@ -22,18 +22,31 @@ shButton btn(btn_pin);
 
 void setLeds()
 {
+  static uint8_t num = 0;
+
   bool x = digitalRead(relay_pin);
-  digitalWrite(led_green_pin, x);
+  // зеленый промаргивает раз в секунду
+  digitalWrite(led_green_pin, x && num < 9);
   digitalWrite(led_red_pin, !x);
+
+  num++;
+  if (num > 9)
+  {
+    num = 0;
+  }
 }
 
 void setRelay()
 {
-  bool x = !digitalRead(relay_pin);
-  digitalWrite(relay_pin, x);
-  if (!x)
+  if (!tasks.getTaskState(relay_guard))
+  {
+    tasks.startTask(relay_guard);
+    digitalWrite(relay_pin, HIGH);
+  }
+  else
   {
     tasks.stopTask(relay_guard);
+    digitalWrite(relay_pin, LOW);
   }
 }
 
@@ -57,8 +70,6 @@ void loop()
   // запускаем и останавливаем задачу удержанием нажатой кнопки не менее 1 секунды
   if (btn.getButtonState() == BTN_LONGCLICK)
   {
-    bool x = !tasks.getTaskState(relay_guard);
-    tasks.setTaskState(relay_guard, x);
-    tasks.taskExes(relay_guard);
+    setRelay();
   }
 }
