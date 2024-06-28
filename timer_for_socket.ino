@@ -23,21 +23,31 @@ shButton btn(btn_pin);
 void setLeds()
 {
   static uint8_t num = 0;
+  static bool to_up = true;
 
   bool x = digitalRead(relay_pin);
-  // зеленый промаргивает раз в секунду
-  digitalWrite(led_green_pin, x && num < 9);
-  digitalWrite(led_red_pin, !x);
-
-  num++;
-  if (num > 9)
+  if (x)
   {
+    // зеленый светодиод плавно разгорается и плавно гаснет
+    num += (to_up) ? 10 : -10;
+    analogWrite(led_green_pin, num);
+    to_up = (num == 250) ? false
+                         : ((num == 0) ? true : to_up);
+  }
+  else
+  {
+    digitalWrite(led_green_pin, LOW);
     num = 0;
   }
+
+  // красный светодиод всегда горит ровно
+  digitalWrite(led_red_pin, !x);
 }
 
 void setRelay()
 {
+  // если задача еще не запущена, запускаем ее и включаем реле
+  // иначе наоборот - останавливаем и отключаем
   if (!tasks.getTaskState(relay_guard))
   {
     tasks.startTask(relay_guard);
@@ -57,7 +67,7 @@ void setup()
   pinMode(led_red_pin, OUTPUT);
 
   relay_guard = tasks.addTask(relay_timeout, setRelay, false);
-  leds_guard = tasks.addTask(100ul, setLeds);
+  leds_guard = tasks.addTask(50ul, setLeds);
 
   btn.setLongClickMode(LCM_ONLYONCE);
   btn.setTimeoutOfLongClick(1000ul);
