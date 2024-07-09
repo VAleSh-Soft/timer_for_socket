@@ -58,13 +58,13 @@ shButton btn(btn_pin); // управляющая кнопка
 void setTimeout(uint32_t _time)
 {
   Serial.println();
-  PRINT("Setting a new relay timeout");
+  PRINT(F("Setting a new relay timeout"));
 
   relay_timeout = _time * 1000;
   tasks.setTaskInterval(relay_guard, relay_timeout, false);
   EEPROM.put(EEPROM_TIMEOUT_INDEX, _time);
 
-  Serial.print("New relay timeout, sec: ");
+  Serial.print(F("New relay timeout, sec: "));
   Serial.println(_time);
 }
 
@@ -72,21 +72,31 @@ void setTimeout(uint32_t _time)
 void getTaskState()
 {
   Serial.println();
-  Serial.println("Task of relay status:");
-  Serial.print("- set timeout, sec: ");
+  Serial.println(F("Task of relay status:"));
+  Serial.print(F("- set timeout, sec: "));
   Serial.println(relay_timeout / 1000);
-  Serial.print("- relay state: ");
+  Serial.print(F("- relay state: "));
   if (tasks.getTaskState(relay_guard))
   {
-    Serial.println("ON");
-    Serial.print("- time left, sec: ");
+    Serial.println(F("ON"));
+    Serial.print(F("- time left, sec: "));
     Serial.println(tasks.getNextTaskPoint(relay_guard) / 1000);
   }
   else
   {
-    Serial.println("OFF");
+    Serial.println(F("OFF"));
   }
   Serial.println();
+}
+
+// очистка буфера Serial
+void clearSerial()
+{
+  while (Serial.available())
+  {
+    Serial.read();
+    delay(1);
+  }
 }
 #endif
 
@@ -181,19 +191,31 @@ void loop()
   uint8_t n = Serial.available();
   if (n > 0)
   {
+    // небольшая пауза
+    delay(5);
+    // считываем первый символ
     unsigned char _command = Serial.read();
-    if (_command == 'r')
+    // если это 'r' и в посылке больше ничего нету, выводим данные по задаче
+    if (_command == 'r' && Serial.peek() < 0)
     {
       getTaskState();
     }
+    // иначе, если это символ 'w', считываем число, которое идет после него
     else if (_command == 'w')
     {
-      int _time = Serial.parseInt();
+      uint32_t _time = (uint32_t)Serial.parseInt();
       if (_time > 86400)
       {
         _time = 86400;
       }
+
+      clearSerial();
       setTimeout(_time);
+    }
+    else
+    {
+      clearSerial();
+      Serial.println(F("Unknown command"));
     }
   }
 #endif
