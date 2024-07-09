@@ -69,7 +69,7 @@ void setTimeout(uint32_t _time)
 }
 
 // вывод в сериал состояния реле
-void getTaskState()
+void getTaskOfRelayState()
 {
   Serial.println();
   Serial.println(F("Task of relay status:"));
@@ -191,14 +191,13 @@ void loop()
   uint8_t n = Serial.available();
   if (n > 0)
   {
-    // небольшая пауза
     delay(5);
     // считываем первый символ
     unsigned char _command = Serial.read();
     // если это 'r' и в посылке больше ничего нету, выводим данные по задаче
     if (_command == 'r' && Serial.peek() < 0)
     {
-      getTaskState();
+      getTaskOfRelayState();
     }
     // иначе, если это символ 'w', считываем число, которое идет после него
     else if (_command == 'w')
