@@ -15,12 +15,13 @@
 /* попутно с отладочным выводом задействуется настройка интервала срабатывания
  * реле через UART:
  * - команда 'w120' задает новый интервал; 120 - количество секунд;
- *     настройка сохраняется в EEPROM, максимальное значение - 84600 (одни
+ *     настройка сохраняется в EEPROM, максимальное значение - 86400 (одни
  *     сутки, ограничение просто чтобы было);
  * - команда 'r' выводит состояние задачи:
  *   - заданный интервал срабатывания;
  *   - активна задача или нет;
  *   - оставшееся время работы задачи;
+ * - команда 's' переключает состояние реле;
  */
 
 // ==== настройки ====================================
@@ -58,7 +59,7 @@ shButton btn(btn_pin); // управляющая кнопка
 void setTimeout(uint32_t _time)
 {
   Serial.println();
-  PRINT(F("Setting a new relay timeout"));
+  Serial.println(F("Setting up a new relay timeout"));
 
   relay_timeout = _time * 1000;
   tasks.setTaskInterval(relay_guard, relay_timeout, false);
@@ -72,8 +73,8 @@ void setTimeout(uint32_t _time)
 void getTaskOfRelayState()
 {
   Serial.println();
-  Serial.println(F("Task of relay status:"));
-  Serial.print(F("- set timeout, sec: "));
+  Serial.println(F("Status of task of relay:"));
+  Serial.print(F("- timeout, sec: "));
   Serial.println(relay_timeout / 1000);
   Serial.print(F("- relay state: "));
   if (tasks.getTaskState(relay_guard))
@@ -210,6 +211,10 @@ void loop()
 
       clearSerial();
       setTimeout(_time);
+    }
+    else if (_command == 's')
+    {
+      setRelay();
     }
     else
     {
