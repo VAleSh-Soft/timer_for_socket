@@ -4,9 +4,9 @@
  *
  * @brief Реле времени на 30 минут с возможностью регулировки интервала
  *        срабатывания через UART;
- * 
+ *
  *        Команды управления реле через UART см. ниже;
- * 
+ *
  *        Включение модуля с зажатой кнопкой управления сбрасывает настройку
  *        интервала срабатывания реле к значению по умолчанию;
  *
@@ -39,18 +39,20 @@
 // ==== настройки ====================================
 
 constexpr uint8_t RELAY_PIN = 3;      // пин реле
-constexpr uint8_t LED_GREEN_PIN = 6;  // пин зеленого светодиода
-constexpr uint8_t LED_RED_PIN = 5;    // пин красного светодиода
-constexpr uint8_t BTN_PIN = 11;       // пин кнопки
 constexpr uint8_t RELAY_LEVEL = HIGH; // управляющий уровень реле
+
+constexpr uint8_t LED_GREEN_PIN = 6; // пин зеленого светодиода
+constexpr uint8_t LED_RED_PIN = 5;   // пин красного светодиода
 
 constexpr uint8_t MIN_LEVEL_FOR_LED = 0;   // минимальное значение ШИМ для зеленого светодиода
 constexpr uint8_t MAX_LEVEL_FOR_LED = 250; // минимальное значение ШИМ для зеленого светодиода
 constexpr uint8_t STEP_FOR_PWM = 5;        // шаг изменения ШИМ для зеленого светодиода
 
-constexpr unsigned long MAX_TIMEOUT = 86400; // максимальное значение таймера
+constexpr uint8_t BTN_PIN = 11; // пин кнопки
 
-unsigned long relay_timeout = 1800000; // время выдержки в милисекундах по умолчанию
+unsigned long RELAY_TIMEOUT_DEFAULT = 1800; // время выдержки по умолчанию, секунд
+
+constexpr unsigned long MAX_TIMEOUT = 86400; // максимальное значение таймера, секунд
 
 #define EEPROM_TIMEOUT_INDEX 50 // индекс в EEPROM для хранения интервала реле (uint32_t)
 
@@ -72,6 +74,8 @@ shHandle relay_guard; // задача управления реле
 shTaskManager tasks(2); // список задач
 
 shButton btn(BTN_PIN); // управляющая кнопка
+
+unsigned long relay_timeout = 1800000; // рабочий интервал
 
 #if UART_ON
 // вывод в Serial значения времени в формате hh:mm:ss
@@ -102,7 +106,7 @@ void setTimeout(uint32_t _time)
   PRINTLN();
   PRINTLN(F("Setting up a new relay timeout"));
 
-  relay_timeout = _time * 1000;
+  relay_timeout = _time * 1000ul;
   tasks.setTaskInterval(relay_guard, relay_timeout, false);
   EEPROM.put(EEPROM_TIMEOUT_INDEX, _time);
 
@@ -145,6 +149,7 @@ void clearSerial()
 }
 #endif
 
+// управление светодиодами
 void setLeds()
 {
   static uint8_t num = MIN_LEVEL_FOR_LED;
@@ -170,6 +175,7 @@ void setLeds()
   digitalWrite(LED_RED_PIN, !x);
 }
 
+// управление реле
 void setRelay()
 {
   static unsigned long timer = 0;
@@ -208,12 +214,11 @@ void setup()
   // кнопка, задать интервал по умолчанию - 30 минут
   if (_time > MAX_TIMEOUT || _time == 0 || !digitalRead(BTN_PIN))
   {
-    EEPROM.put(EEPROM_TIMEOUT_INDEX, relay_timeout / 1000);
+    _time = RELAY_TIMEOUT_DEFAULT;
+    EEPROM.put(EEPROM_TIMEOUT_INDEX, _time);
   }
-  else
-  {
-    relay_timeout = _time * 1000;
-  }
+
+  relay_timeout = _time * 1000ul;
 
   relay_guard = tasks.addTask(relay_timeout, setRelay, false);
   leds_guard = tasks.addTask(50ul, setLeds);
