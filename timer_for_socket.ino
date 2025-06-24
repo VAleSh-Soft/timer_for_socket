@@ -10,7 +10,7 @@
  *        Включение модуля с зажатой кнопкой управления сбрасывает настройку
  *        интервала срабатывания реле к значению по умолчанию;
  *
- * @version 3.5.3
+ * @version 3.5.4
  * @date 22.06.2025
  *
  * @copyright Copyright (c) 2024
@@ -166,10 +166,12 @@ void setRelay()
   // иначе наоборот - останавливаем и отключаем
   if (!tasks.getTaskState(relay_guard))
   {
-    tasks.startTask(relay_guard);
+    tasks.setTaskInterval(relay_guard, relay_timeout);
     digitalWrite(RELAY_PIN, RELAY_LEVEL);
     timer = millis();
     PRINTLN(F("Task of relay started"));
+    PRINT(F("Set working hours: "));
+    WRITETIME(relay_timeout);
   }
   else
   {
