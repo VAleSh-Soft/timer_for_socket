@@ -10,8 +10,8 @@
  *        Включение модуля с зажатой кнопкой управления сбрасывает настройку
  *        интервала срабатывания реле к значению по умолчанию;
  *
- * @version 3.5.4
- * @date 22.06.2025
+ * @version 3.5.5
+ * @date 25.06.2025
  *
  * @copyright Copyright (c) 2024
  */
@@ -27,22 +27,43 @@
 void writeTime(unsigned long _time, bool line_break = true)
 {
   _time /= 1000;
-  PRINT(_time / 3600);
-  PRINT(":");
-  _time %= 3600;
-  if (_time / 60 < 10)
-  {
-    PRINT(0);
-  }
-  PRINT(_time / 60);
-  PRINT(F(":"));
-  _time %= 60;
-  if (_time < 10)
-  {
-    PRINT(0);
-  }
 
-  (line_break) ? PRINTLN(_time) : PRINT(_time);
+  // PRINT(_time / 3600);
+  // PRINT(":");
+  // _time %= 3600;
+  // if (_time / 60 < 10)
+  // {
+  //   PRINT(0);
+  // }
+  // PRINT(_time / 60);
+  // PRINT(F(":"));
+  // _time %= 60;
+  // if (_time < 10)
+  // {
+  //   PRINT(0);
+  // }
+
+  // (line_break) ? PRINTLN(_time) : PRINT(_time);
+
+  char x[8] = {};
+  char *y = " ";
+
+  itoa(_time / 3600, y, DEC);
+  strcat(x, y);
+  strcat(x, ":");
+  _time %= 3600;
+  itoa((_time / 60) / 10, y, DEC);
+  strcat(x, y);
+  itoa((_time / 60) % 10, y, DEC);
+  strcat(x, y);
+  strcat(x, ":");
+  _time %= 60;
+  itoa((_time) / 10, y, DEC);
+  strcat(x, y);
+  itoa((_time) % 10, y, DEC);
+  strcat(x, y);
+
+  (line_break) ? PRINTLN(x) : PRINT(x);
 }
 
 void setTimeout(uint32_t _time)
